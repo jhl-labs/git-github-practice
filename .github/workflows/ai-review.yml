@@ -1,0 +1,45 @@
+# Pull Request가 열리면 Claude Code(CLI, headless 모드)가 변경 사항을 리뷰하고 댓글을 남긴다.
+# 필요: 저장소 Settings → Secrets and variables → Actions → ANTHROPIC_API_KEY
+name: AI Code Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # 외부 fork에서 온 PR에는 Secret이 전달되지 않으므로 같은 저장소 PR만 리뷰
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+      - name: Claude Code 설치
+        run: npm install -g @anthropic-ai/claude-code
+      - name: 변경 사항 리뷰
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          if [ -z "$ANTHROPIC_API_KEY" ]; then
+            echo "::warning::ANTHROPIC_API_KEY Secret이 없어 리뷰를 건너뜁니다."
+            exit 0
+          fi
+          gh pr diff "$PR_NUMBER" > pr.diff
+          claude -p "$(cat .github/review-prompt.md)" < pr.diff > review.md
+          {
+            echo "## 🤖 AI 코드 리뷰 (claude -p)"
+            echo
+            cat review.md
+            echo
+            echo "<sub>AI 리뷰는 참고용입니다. 최종 판단과 승인은 사람이 합니다.</sub>"
+          } > comment.md
+          gh pr comment "$PR_NUMBER" --body-file comment.md
