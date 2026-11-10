@@ -79,3 +79,13 @@ jobs:
           ISSUE_NUMBER: ${{ github.event.issue.number }}
         run: |
           gh issue comment "$ISSUE_NUMBER" --body "❌ 변환에 실패했습니다. 로그를 확인해 주세요: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+  # GITHUB_TOKEN으로 push한 커밋은 Pages 빌드를 트리거하지 않으므로, 배포 워크플로우를 직접 호출한다
+  deploy:
+    needs: convert
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+      actions: read
+    uses: ./.github/workflows/pages-deploy.yml

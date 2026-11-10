@@ -1,0 +1,45 @@
+# docs 브랜치의 내용을 GitHub Pages로 배포한다. (Settings → Pages → Source: "GitHub Actions")
+#
+# 왜 따로 배포하나요?
+#   GITHUB_TOKEN으로 push한 커밋은 Pages 빌드를 자동으로 트리거하지 않습니다(GitHub 공식 동작).
+#   그래서 봇이 docs 브랜치에 데이터를 커밋한 뒤에는, 같은 실행 안에서 이 워크플로우를 직접 호출해 배포합니다.
+#   docs 브랜치는 "배포할 결과물 + 데이터 변경 이력"을 담는 곳으로 그대로 씁니다.
+name: Deploy Pages
+
+on:
+  workflow_call: # excel-to-dashboard.yml, deploy-dashboard.yml 이 호출
+  workflow_dispatch: # 필요하면 Actions 탭에서 수동 재배포
+
+permissions:
+  contents: read
+  pages: write # Pages에 배포
+  id-token: write # deploy-pages가 배포 대상 확인에 쓰는 OIDC 토큰
+  actions: read # deploy-pages v4+ 가 업로드된 아티팩트를 찾을 때 필요
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest # 파일을 올리기만 하므로 빠른 Linux runner
+    timeout-minutes: 10
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: docs 브랜치 받기
+        uses: actions/checkout@v6
+        with:
+          ref: docs
+
+      - name: Pages 설정 확인
+        uses: actions/configure-pages@v6
+
+      - name: 사이트 파일 묶기
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: .
+
+      - name: GitHub Pages에 배포
+        id: deployment
+        uses: actions/deploy-pages@v5

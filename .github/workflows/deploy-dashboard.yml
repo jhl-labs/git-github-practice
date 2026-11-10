@@ -1,0 +1,37 @@
+# main 브랜치의 dashboard/ 화면 코드가 바뀌면 docs 브랜치에 반영하고 Pages에 다시 배포한다.
+# 엑셀을 읽을 필요가 없으므로 빠르고 저렴한 Linux runner를 쓴다.
+name: Deploy Dashboard
+
+on:
+  push:
+    branches: [main]
+    paths: ["dashboard/**", "scripts/publish_docs.sh"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: dashboard-data
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+      - name: docs 브랜치에 화면 파일 반영 (데이터는 유지)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          bash scripts/publish_docs.sh "site: 대시보드 화면 갱신 (${GITHUB_SHA::7})"
+
+  deploy:
+    needs: publish
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+      actions: read
+    uses: ./.github/workflows/pages-deploy.yml

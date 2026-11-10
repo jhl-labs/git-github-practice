@@ -1,0 +1,216 @@
+:root {
+  --bg: #f4f5f9;
+  --card: #ffffff;
+  --ink: #171923;
+  --muted: #6b7080;
+  --line: #e3e5ec;
+  --accent: #4f46e5;
+  --danger: #c2410c;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #12131a;
+    --card: #1b1d27;
+    --ink: #ecedf2;
+    --muted: #9599a8;
+    --line: #2b2e3b;
+    --accent: #8b8cf8;
+    --danger: #fb923c;
+    color-scheme: dark;
+  }
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: 'Pretendard Variable', Pretendard, system-ui, sans-serif;
+  line-height: 1.6;
+}
+[hidden] {
+  display: none !important;
+}
+.muted {
+  color: var(--muted);
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+button,
+select,
+input {
+  font: inherit;
+  color: inherit;
+}
+button {
+  cursor: pointer;
+  border: 0;
+  border-radius: 10px;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 700;
+  min-height: 44px;
+  padding: 0 18px;
+}
+button.ghost {
+  background: transparent;
+  color: var(--ink);
+  border: 1px solid var(--line);
+}
+select,
+input {
+  min-height: 40px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--card);
+  padding: 0 10px;
+}
+
+/* 로그인 */
+.login {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+}
+.login-card {
+  width: min(380px, 100%);
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 32px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 0 20px 50px -25px rgba(0, 0, 0, 0.35);
+}
+.login-mark {
+  font-size: 32px;
+}
+.login-card h1 {
+  margin: 0;
+  font-size: 22px;
+}
+.login-card p {
+  margin: 0;
+}
+.error {
+  color: var(--danger);
+  font-weight: 700;
+  font-size: 14px;
+}
+.fineprint {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 6px !important;
+}
+
+/* 대시보드 */
+.topbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px clamp(16px, 4vw, 40px);
+  background: var(--card);
+  border-bottom: 1px solid var(--line);
+}
+.topbar h1 {
+  margin: 0;
+  font-size: 22px;
+}
+.topbar p {
+  margin: 0;
+  font-size: 13px;
+}
+.topbar-actions {
+  display: flex;
+  gap: 8px;
+}
+.content {
+  padding: 24px clamp(16px, 4vw, 40px) 60px;
+  display: grid;
+  gap: 18px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+.kpi,
+.panel,
+.empty {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 16px 18px;
+}
+.kpi small {
+  color: var(--muted);
+  font-weight: 700;
+  font-size: 13px;
+}
+.kpi strong {
+  display: block;
+  font-size: 26px;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.panel-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.panel-head h2 {
+  margin: 0;
+  font-size: 17px;
+}
+.controls {
+  display: flex;
+  gap: 10px;
+  font-size: 14px;
+}
+.chart-box {
+  position: relative;
+  height: 320px;
+}
+.table-wrap {
+  overflow: auto;
+  max-height: 520px;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+th,
+td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  white-space: nowrap;
+}
+th {
+  position: sticky;
+  top: 0;
+  background: var(--card);
+  color: var(--muted);
+  font-size: 12.5px;
+}
+.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
