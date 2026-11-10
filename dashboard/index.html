@@ -56,7 +56,10 @@
         <section class="panel">
           <div class="panel-head">
             <h2>원본 데이터 <span id="row-count" class="muted"></span></h2>
-            <input id="search" type="search" placeholder="검색…" aria-label="표 검색" />
+            <div class="panel-tools">
+              <input id="search" type="search" placeholder="검색…" aria-label="표 검색" />
+              <button id="csv-download" type="button" class="ghost" title="검색 결과에 보이는 행만 내려받아요">CSV 다운로드</button>
+            </div>
           </div>
           <div class="table-wrap"><table id="table"></table></div>
         </section>
