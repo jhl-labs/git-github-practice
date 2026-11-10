@@ -47,6 +47,9 @@ jobs:
     if: needs.gate.outputs.allowed == 'true'
     runs-on: windows-latest
     timeout-minutes: 20
+    env:
+      # Windows runner의 파이썬 기본 출력 인코딩은 cp1252라 한글·이모지를 print 하면 UnicodeEncodeError가 난다
+      PYTHONUTF8: "1"
     steps:
       - name: 코드 받기
         uses: actions/checkout@v6
