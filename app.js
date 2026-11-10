@@ -122,9 +122,48 @@
     });
   }
 
-  function renderTable(sheet) {
+  /** 검색창 필터가 적용된 행 (표와 CSV 다운로드가 같은 결과를 쓰도록 한 곳에서 계산) */
+  function filteredRows(sheet) {
     const query = $('search').value.trim().toLowerCase();
-    const rows = query ? sheet.rows.filter((r) => Object.values(r).some((v) => String(v ?? '').toLowerCase().includes(query))) : sheet.rows;
+    return query ? sheet.rows.filter((r) => Object.values(r).some((v) => String(v ?? '').toLowerCase().includes(query))) : sheet.rows;
+  }
+
+  // ── CSV 다운로드 ─────────────────────────────────────
+  /** CSV 한 칸: 쉼표·따옴표·줄바꿈이 있으면 따옴표로 감싸고 따옴표는 두 번 쓴다.
+   *  =, +, -, @, 탭, CR 로 시작하는 텍스트는 엑셀이 수식으로 실행하지 않도록 앞에 ' 를 붙인다(CSV 인젝션 방지).
+   *  숫자 여부는 컬럼 메타데이터가 아니라 값의 실제 타입으로 판단한다(data.json을 그대로 믿지 않기). */
+  const FORMULA_PREFIX = /^[=+\-@\t\r]/;
+  function csvCell(value) {
+    if (value === null || value === undefined) return '';
+    let text = String(value);
+    if (typeof value !== 'number' && FORMULA_PREFIX.test(text)) text = `'${text}`;
+    return /[",\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+  }
+
+  function toCsv(sheet, rows) {
+    const header = sheet.columns.map((c) => csvCell(c.name)).join(',');
+    const lines = rows.map((row) => sheet.columns.map((c) => csvCell(row[c.name])).join(','));
+    return [header, ...lines].join('\r\n');
+  }
+
+  function downloadCsv(sheet) {
+    const today = new Date();
+    const stamp = `${today.getFullYear()}${String(today.getMonth() + 1).padStart(2, '0')}${String(today.getDate()).padStart(2, '0')}`;
+    const safeName = sheet.name.replace(/[\\/:*?"<>|]/g, '_');
+    // UTF-8 BOM(\uFEFF): 엑셀이 한글 CSV를 깨짐 없이 열도록
+    const blob = new Blob(['\uFEFF' + toCsv(sheet, filteredRows(sheet))], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${safeName}_${stamp}.csv`;
+    document.body.append(link); // 일부 브라우저는 DOM에 붙은 링크만 클릭을 처리한다
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 0); // 다운로드가 시작된 뒤 해제
+  }
+
+  function renderTable(sheet) {
+    const rows = filteredRows(sheet);
     const thead = document.createElement('thead');
     const headRow = document.createElement('tr');
     for (const col of sheet.columns) {
@@ -165,7 +204,9 @@
   $('sheet-select').addEventListener('change', (e) => selectSheet(e.target.value));
   $('group-select').addEventListener('change', () => renderChart(state.sheet));
   $('value-select').addEventListener('change', () => renderChart(state.sheet));
-  $('search').addEventListener('input', () => renderTable(state.sheet));
+  // 데이터를 못 불러온 경우(state.sheet 없음)에는 아무것도 하지 않는다
+  $('search').addEventListener('input', () => state.sheet && renderTable(state.sheet));
+  $('csv-download').addEventListener('click', () => state.sheet && downloadCsv(state.sheet));
 
   async function start() {
     $('login-view').hidden = true;

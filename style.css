@@ -214,3 +214,10 @@ th {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
+
+.panel-tools {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
