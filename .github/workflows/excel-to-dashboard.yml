@@ -15,12 +15,36 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # 문지기: 공개 저장소는 아무나 이슈를 열 수 있으므로, 저장소에 쓰기 권한이 있는 사람의 이슈만 통과시킨다.
+  # author_association 값은 조직 멤버십을 비공개로 둔 사람이면 MEMBER가 아니라 CONTRIBUTOR로 와서
+  # 관리자도 막힐 수 있다 → GitHub API로 작성자의 "실제 권한"을 확인한다. (Linux라 몇 초면 끝난다)
+  gate:
+    if: startsWith(github.event.issue.title, '[EXCEL]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    outputs:
+      allowed: ${{ steps.check.outputs.allowed }}
+    steps:
+      - name: 이슈 작성자의 저장소 권한 확인 (write 이상만 허용)
+        id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          AUTHOR: ${{ github.event.issue.user.login }}
+        run: |
+          perm=$(gh api "repos/${REPO}/collaborators/${AUTHOR}/permission" --jq .permission 2>/dev/null || echo none)
+          echo "작성자 ${AUTHOR} 의 권한: ${perm}"
+          case "$perm" in
+            admin|maintain|write) echo "allowed=true" >> "$GITHUB_OUTPUT" ;;
+            *) echo "allowed=false" >> "$GITHUB_OUTPUT"
+               echo "::notice::쓰기 권한이 없는 사용자의 이슈라 변환하지 않습니다." ;;
+          esac
+
   convert:
-    # 1) 제목이 [EXCEL] 로 시작하고  2) 저장소 소유자/멤버/협업자가 올린 이슈만 처리
-    #    (공개 저장소는 아무나 이슈를 열 수 있으므로, 이 조건이 없으면 누구나 대시보드 데이터를 바꿀 수 있다)
-    if: >-
-      startsWith(github.event.issue.title, '[EXCEL]') &&
-      contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.issue.author_association)
+    needs: gate
+    if: needs.gate.outputs.allowed == 'true'
     runs-on: windows-latest
     timeout-minutes: 20
     steps:
